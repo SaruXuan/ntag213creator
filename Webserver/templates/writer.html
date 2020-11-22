@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html>
+    <meta name="viewport" content="width=device-width" />
+    <title>Writer</title>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
+    <script type="text/javascript" src="//cdn.bootcss.com/socket.io/1.5.1/socket.io.min.js"></script>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css" integrity="sha384-9aIt2nRpC12Uk9gS9baDl411NQApFmC26EwAOH8WgZl5MYYxFfc+NcPb1dKGj7Sk" crossorigin="anonymous">
+    <script>
+    var device = "{{device}}";
+    var socket;
+    var language = 'english';
+    var dict = {};
+    var Log_tap = "Please tap your card!";
+    var Log_done = "Done!";
+    $(document).ready(function(){
+        namespace = '/writer'
+        socket = io.connect(location.protocol + '//' + document.domain + ':' + location.port + namespace);
+        socket.emit('join', {room: device});
+        socket.on('WriteDone', function(msg) {
+            console.log("WriteDone function")
+            $("#showLog").text(Log_done);
+            $("#showLog").css('color', 'green');
+            <!-- alert("Write Tag Successful!"); -->
+        });
+
+        //language
+        language = getCookie("language");
+        if(language==""){
+            language = "english";
+            setCookie("language",language);
+        }
+        $("#lang").val(language)
+
+        $("#lang").on("change", function () {
+            language = $(this).val();
+            for(var i in dict){
+                if($("#showIMG").attr("alt") == i){
+                    if(language == 'chinese'){
+                        $("#showName").text(dict[i]['chinese']);
+                        console.log(dict[i]['chinese']);
+                    }else if(language == 'japanese'){
+                        $("#showName").text(dict[i]['japanese']);
+                        console.log("change to japanese");
+                    }else{
+                        $("#showName").text(dict[i]['english']);
+                        console.log("change to english");
+                    }
+                    break;
+                }
+            }
+            setCookie("language",language);
+            console.log("cookie:"+getCookie("language"))
+        });
+
+        {% for amiibo in Amiibos %}
+            console.log("URL: {{amiibo['url']}}")
+            console.log("NAME(eng): {{amiibo['name'][0]}}")
+            console.log("NAME(tchi): {{amiibo['name'][1]}}")
+            console.log("NAME(jap): {{amiibo['name'][2]}}")
+            console.log("key: {{amiibo['key']}}")
+            console.log("")
+            <!-- 建置語言包 -->
+            dict["{{amiibo['key']}}"] = {"english":"{{amiibo['name'][0]}}", "chinese":"{{amiibo['name'][1]}}", "japanese":"{{amiibo['name'][2]}}"}
+            img = "<img src=\"{{amiibo['url']}}\" onclick=\"SelectImg('{{amiibo['url']}}', '{{amiibo['key']}}')\">"
+            $('#img-container').append(img);
+        {% endfor %}
+        // print log
+        console.log("Device: " + device)
+        console.log(dict)
+        console.log("cookie:"+getCookie("language"))
+    });
+
+    function getCookie(cname) {
+        var name = cname + "=";
+        var decodedCookie = decodeURIComponent(document.cookie);
+        var ca = decodedCookie.split(';');
+        for(var i = 0; i <ca.length; i++) {
+            var c = ca[i];
+            while (c.charAt(0) == ' ') {
+            c = c.substring(1);
+            }
+            if (c.indexOf(name) == 0) {
+            return c.substring(name.length, c.length);
+            }
+        }
+        return "";
+    }
+
+    function setCookie(cname, cvalue) {
+        var d = new Date();
+        d.setTime(d.getTime() + (1*24*60*60*1000));
+        var expires = "expires="+ d.toUTCString();
+        document.cookie = cname + "=" + cvalue + ";" + expires + ";path=/";
+    }
+    
+    function GotoReader(){
+        <!-- window.location.replace("../reader/"+device); -->
+        window.location = "../reader/"+device;
+    }
+    
+    function ApplyToWrite(){
+        data = $("#showIMG").attr('alt');
+        socket.emit('ApplyToWrite', {data: data, device: device});
+        console.log("ApplyToWrite function:"+data);
+        $("#showLog").text(Log_tap);
+        $("#showLog").css('color', 'red');
+    }
+    
+    function ApplyToErase(){
+        data = "";
+        socket.emit('ApplyToWrite', {data: data, device: device});
+        console.log("ApplyToErase function");
+        $("#showLog").text(Log_tap);
+        $("#showLog").css('color', 'red');
+    }
+    
+    function SelectImg(url, key){
+        console.log("SelectImg function");
+        if($("#showLog").text() != Log_tap){
+            $("#showLog").text("");
+        }
+        $("#showIMG").attr("src", url);
+        $("#showIMG").attr("alt", key);
+        for(var i in dict){
+            if($("#showIMG").attr("alt") == i){
+                if(language == 'chinese'){
+                    $("#showName").text(dict[i]['chinese']);
+                    console.log(dict[i]['chinese']);
+                }else if(language == 'japanese'){
+                    $("#showName").text(dict[i]['japanese']);
+                    console.log("change to japanese");
+                }else{
+                    $("#showName").text(dict[i]['english']);
+                    console.log("change to english");
+                }
+                $("#showName").css("visibility","visible")
+                break;
+            }
+        }
+    }
+    
+    </script>
+
+    <style type="text/css">
+        body, html{
+			margin:0;
+			padding:0;
+            overflow-x: hidden;
+        }
+        .wrapper{
+            height: 100%;
+            background-image: url("../static/background.jpg");
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            background-attachment: fixed;
+        }
+        #lang{
+            margin: 20px 0 0 0;
+        }
+        #browse-div{
+            height: 100%;
+            border-right: 5px solid;
+        }
+        #img-container{
+            overflow-y: auto;
+            width: 80%;
+            margin: 0 auto;
+        }
+        #img-container img{
+            width: 200px;
+            height: 280px;
+            margin: 30px 25px;
+        }
+        #write-div{
+            position: fixed;
+            text-align: center;
+            right: 0px;
+        }
+        @media (max-height: 700px){
+            #write-div{
+                position: static;
+            }
+        }
+        #write-div img{
+            width: 277px;
+            height: 388px;
+        }
+        #write-div button{
+            background-color: rgba(0, 0, 0, 0);
+            font-weight: bold;
+        }
+    </style>
+
+    <body>
+        <div class='wrapper'>
+            <div class='row'>
+                <div class='col-md-8'>
+                    <div id='browse-div'>
+                        <div id='img-container'>
+                            <!-- <img src="../static/amiibo.jpg"> -->
+                            <!-- <img src="../static/amiibo.jpg"> -->
+                            <!-- <img src="../static/amiibo.jpg"> -->
+                            <!-- <img src="../static/amiibo.jpg"> -->
+                            <!-- <img src="../static/amiibo.jpg"> -->
+                            <!-- <img src="../static/amiibo.jpg"> -->
+                            <!-- <img src="../static/amiibo.jpg"> -->
+                            <!-- <img src="../static/amiibo.jpg"> -->
+                        </div>
+                    </div>
+                </div>
+                <div id='write-div' class='col-md-4'>
+                    <select id='lang'>
+                        <option value="english">English</option>
+                        <option value="chinese">Chinese</option>
+                        <option value="japanese">Japanese</option>
+                    </select>
+                    <h2 id="board" class='display-2' style="font-weight:bold;">Writer</h2>
+                    <br>
+                    <img id="showIMG" src="../static/amiibo.jpg" alt="amiibo">
+                    <p></p>
+                    <span id='showName' style="visibility:hidden; font-weight:bold; font-size:30px;">None</span>
+                    <p></p>
+                    <button onclick=ApplyToWrite()>Write Tag</button>
+                    <button onclick=ApplyToErase()>Erase Tag</button>
+                    <br><br>
+                    <button onclick=GotoReader()>Go to Reader</button>
+                    <p id='showLog' style="font-weight:bold; font-size:30px;"></p>
+                </div>
+            </div>
+        </div>
+    </body>
+</html>

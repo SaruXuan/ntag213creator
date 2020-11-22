@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html>
+    <meta name="viewport" content="width=device-width" />
+    <title>Reader</title>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
+    <script type="text/javascript" src="//cdn.bootcss.com/socket.io/1.5.1/socket.io.min.js"></script>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css" integrity="sha384-9aIt2nRpC12Uk9gS9baDl411NQApFmC26EwAOH8WgZl5MYYxFfc+NcPb1dKGj7Sk" crossorigin="anonymous">
+
+    <script>
+    var device = "{{device}}";
+    var socket;
+    var language;
+    var lang_list = [];
+    $(document).ready(function(){
+        namespace = '/reader'
+        socket = io.connect(location.protocol + '//' + document.domain + ':' + location.port + namespace);
+        socket.emit('join', {room: device});
+        socket.on('CardDetected', function(msg) {
+            console.log("CardDetected function")
+            console.log("URL:"+msg.img_url)
+            console.log("NAME:"+msg.card_name)
+            console.log("NAME:"+msg.card_name[0])
+            console.log("NAME:"+msg.card_name[1])
+            console.log("NAME:"+msg.card_name[2])
+            <!--語言包-->
+            lang_list[0] = msg.card_name[0];
+            lang_list[1] = msg.card_name[1];
+            lang_list[2] = msg.card_name[2];
+            $("#showIMG").attr("src", msg.img_url); // Change Img
+            <!-- TODO: 這邊要顯示卡片名稱 -->
+            if(language == 'chinese'){
+                $("#showName").text(lang_list[1]);
+            }else if(language == 'japanese'){
+                $("#showName").text(lang_list[2]);
+            }else{
+                $("#showName").text(lang_list[0]);
+            }
+        });
+        //language
+        language = getCookie("language");
+        if(language==""){
+            language = "english";
+            setCookie("language",language);
+        }
+        $("#lang").val(language)
+        $("#lang").on("change", function () {
+            language = $(this).val();
+            if(language == 'chinese'){
+                $("#showName").text(lang_list[1]);
+            }else if(language == 'japanese'){
+                $("#showName").text(lang_list[2]);
+            }else{
+                $("#showName").text(lang_list[0]);
+            }
+            setCookie("language",language);
+            console.log("cookie:"+getCookie("language"))
+        });
+        
+        // print log
+        console.log("Device: " + device)
+        console.log("cookie:"+getCookie("language"))
+    });
+
+    function getCookie(cname) {
+        var name = cname + "=";
+        var decodedCookie = decodeURIComponent(document.cookie);
+        var ca = decodedCookie.split(';');
+        for(var i = 0; i <ca.length; i++) {
+            var c = ca[i];
+            while (c.charAt(0) == ' ') {
+            c = c.substring(1);
+            }
+            if (c.indexOf(name) == 0) {
+            return c.substring(name.length, c.length);
+            }
+        }
+        return "";
+    }
+
+    function setCookie(cname, cvalue) {
+        var d = new Date();
+        d.setTime(d.getTime() + (1*24*60*60*1000));
+        var expires = "expires="+ d.toUTCString();
+        document.cookie = cname + "=" + cvalue + ";" + expires + ";path=/";
+    }
+    
+    function GotoWriter(){
+        <!-- window.location.replace("../writer/"+device); -->
+        window.location = "../writer/"+device;
+    }
+
+    function BackHome(){
+        <!-- window.location.replace("../"); -->
+        window.location = "../";
+    }
+    
+    </script>
+
+    <style type="text/css">
+        body, html{
+            height: 100%;
+            margin:0;
+			padding:0;
+            overflow-x: hidden;
+        }
+        .wrapper{
+            height: 100%;
+            background-image: url("../static/background.jpg");
+            background-size: cover;
+            background-position: fixed;
+            background-repeat: no-repeat;
+            background-attachment: fixed;
+        }
+        #lang{
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            z-index: 3;
+        }
+        .link{
+            background-color: rgba(0,0,0,0);
+        }
+        .img-border{
+            text-align: center;
+        }
+        .pic{
+            width: 277px;
+            height: 388px;
+        }
+        .button{
+            text-align: center;
+        }
+        .button button{
+            font-weight: bold;
+        }
+    </style>
+
+    <body>
+        <div class='wrapper'>
+            <div class='main'>
+                <select id='lang'>
+                    <option value="english">English</option>
+                    <option value="chinese">Chinese</option>
+                    <option value="japanese">Japanese</option>
+                </select>
+                <div class='row'>
+                    <div class='col-md-4'></div>
+                    <div class='col-md-4'>
+                        <h1 class='display-2' style='text-align: center;'>Reader</h1>
+                        <br>
+                        <div class='img-border'><img id='showIMG' class='pic' src="../static/amiibo.jpg" alt="amiibo">
+                        <br>
+                        <p id='showName' style="font-weight:bold; font-size:30px;"></p>
+                        </div>
+                        <div class='button'><button class='link' type="button" onclick=GotoWriter()>Go to Writer</button></div><br>
+                        <div class='button'><button class='link' type="button" onclick=BackHome()>Back home</button></div>
+                        <br>
+                    </div>
+                    <div class='col-md-4'></div>
+                </div>
+            </div>
+        </div>
+    </body>
+</html>

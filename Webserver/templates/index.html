@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html>
+    <meta name="viewport" content="width=device-width" />
+    <title>Devices List</title>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
+    <script type="text/javascript" src="//cdn.bootcss.com/socket.io/1.5.1/socket.io.min.js"></script>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css" integrity="sha384-9aIt2nRpC12Uk9gS9baDl411NQApFmC26EwAOH8WgZl5MYYxFfc+NcPb1dKGj7Sk" crossorigin="anonymous">
+    <script>
+    var socket;
+    var device_dict = {};
+    var device_count = 0;
+    
+    $(document).ready(function(){
+        namespace = '/index'
+        socket = io.connect(location.protocol + '//' + document.domain + ':' + location.port + namespace);
+        socket.on('ActiveDevice', function(msg) {
+            console.log("ActiveDevice function")
+            console.log("Act Device:"+msg.device)
+            $('#'+msg.device).text("Active");
+            $('#'+msg.device).css('color', 'green');
+        });
+        socket.on('InactiveDevice', function(msg) {
+            console.log("InactiveDevice function")
+            console.log("Inact Device:"+msg.device)
+            $('#'+msg.device).text("Inactive");
+            $('#'+msg.device).css('color', 'red');
+        });
+        
+        {% if device_dict %}    // jinja
+            {% for key, value in device_dict.items() %}
+                device = "{{key}}"
+                state = "{{value}}"
+                device_dict[device] = state
+                device_count = device_count + 1
+                btn_html = '<button class="btn btn-light" onclick=SelectDevice("'+device+'")>'+device+'</button>'
+                {% if value %}
+                    $('#device').append(btn_html+' <h3 id="'+device+'" style="color:green">'+'Active'+'</h3>'+'</br>');  //jQuery
+                {% else %}
+                    $('#device').append(btn_html+' <h3 id="'+device+'" style="color:red">'+'Inactive'+'</h3>'+'</br>');
+                {% endif %}
+                console.log("Devices:"+device+" activate: " + state)
+            {% endfor %}
+        {% endif %}
+    });
+    
+    function SelectDevice(device){
+        <!-- window.location.replace("../reader/"+device); -->
+        window.location = "../reader/"+device;
+    }
+    
+    </script>
+
+    <style type='text/css'>
+        body, html {
+            height: 100%;
+        }
+        .wrapper{
+            background-image: url('../static/background-2.jpg');
+            background-size: contain;
+            height: 100%;
+            text-align: center;
+        }
+        button{
+            width: 200px;
+            font-size: 50px;
+            background-color: rgba(200,200,200,0.9);
+            border-color: rgba(200,200,200,0.9);
+        }
+    </style>
+    <body>
+        <div class='wrapper'>
+            <h1 id='title' class="display-3">Welcome to amiibo creator world</h1>
+            <br><br>
+            <div id="device" style="line-height:100%"></div>
+          </div>    
+    </body>
+</html>

@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html>
+    <meta name="viewport" content="width=device-width" />
+    <title>Simulator</title>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
+    <script type="text/javascript" src="//cdn.bootcss.com/socket.io/1.5.1/socket.io.min.js"></script>
+
+    <script>
+    var device = "Simulator";
+    var socket;
+    
+    $(document).ready(function(){
+        namespace = '/simulator'
+        socket = io.connect(location.protocol + '//' + document.domain + ':' + location.port + namespace);
+        {% for amiibo in Amiibos %}
+            <!-- console.log("URL: {{amiibo['url']}}") -->
+            <!-- console.log("NAME(eng): {{amiibo['name'][0]}}") -->
+            console.log("NAME(tchi): {{amiibo['name'][1]}}")
+            <!-- console.log("NAME(jap): {{amiibo['name'][2]}}") -->
+            console.log("key: {{amiibo['key']}}")
+            console.log("")
+            btn_html = '<div class="button"><button onclick=SelectBtn("'+"{{amiibo['key']}}"+'")>'+"{{amiibo['name'][1]}}"+'</button></div>'
+            $('#btn-container').append(btn_html+"</br>");
+        {% endfor %}
+        // print log
+        <!-- console.log("Device: " + device) -->
+    });
+    
+    function SelectBtn(key){
+        socket.emit('simulate', {key: key});
+    }
+    
+    </script>
+
+    <style type="text/css">
+        body, html{
+            height: 100%;
+        }
+        .wrapper{
+            height: 100%;
+            overflow-X: hidden;
+            overflow-y: hidden;
+            background-image: url("../static/background.jpg");
+            background-size: 100% auto;
+            background-position: center;
+            background-repeat: no-repeat;
+        }
+        #navbar{
+            display: flex;
+            justify-content: flex-start;
+            align-items: center;
+            position: sticky;
+            top: 0px;
+            width: 100%;
+            height: 50px;
+            background-color: rgba(0,0,0,0);
+            margin: 0 0;
+        }
+        .link{
+            background-color: rgba(0,0,0,0);
+        }
+        .img-border{
+            text-align: center;
+        }
+        .pic{
+            width: 277px;
+            height: 388px;
+        }
+        .button{
+            text-align: center;
+        }
+    </style>
+
+    <body>
+        <div class='wrapper'>
+            <div class='main'>
+                <div class='row'>
+                    <div class='col-md-4'></div>
+                    <div class='col-md-4'>
+                        <h1 class='display-2' style='text-align: center;'>Simulator</h1>
+                        <div id='btn-container' style="align:center">
+                        </div>
+                    </div>
+                    <div class='col-md-4'></div>
+                </div>
+            </div>
+        </div>
+    </body>
+</html>
